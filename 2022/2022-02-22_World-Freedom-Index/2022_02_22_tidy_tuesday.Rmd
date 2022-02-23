@@ -1,0 +1,148 @@
+---
+title: "Freedom in the World - TidyTuesday"
+author: "Sebastian Carl"
+date: "`r format(Sys.time())`"
+output: github_document
+knit: (function(input, ...) {
+    rmarkdown::render(
+      input,
+      output_file = "Readme.md",
+      envir = globalenv()
+    )
+  })
+---
+
+# TidyTuesday
+
+Join the R4DS Online Learning Community in the weekly #TidyTuesday event!
+Every week we post a raw dataset, a chart or article related to that dataset, and ask you to explore the data.
+While the dataset will be “tamed”, it will not always be tidy! As such you might need to apply various R for Data Science techniques to wrangle the data into a true tidy format.
+The goal of TidyTuesday is to apply your R skills, get feedback, explore other’s work, and connect with the greater #RStats community!
+As such we encourage everyone of all skills to participate!
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(tidytuesdayR)
+library(sf)
+library(maptools)
+```
+
+# Load the weekly Data
+
+Dowload the weekly data and make available in the `tt` object.
+
+```{r Load}
+
+tt <- tt_load("2022-02-22")
+df <- tt$freedom |> janitor::clean_names()
+
+```
+
+
+# Readme
+
+Take a look at the readme for the weekly data to get insight on the dataset.
+This includes a data dictionary, source, and a link to an article on the data.
+
+```{r Readme, eval = interactive()}
+
+tt
+
+```
+
+
+# Glimpse Data
+
+Take an initial look at the format of the data available.
+
+```{r Glimpse}
+
+skimr::skim(df)
+
+```
+
+# Wrangle
+
+Load simple world data from the maptools package, convert it to sf objects and join them to the dataset. Can only join by country name which requires some cleaning because of different names in the world map and the actual dataset.
+
+```{r Wrangle}
+data("wrld_simpl", package = "maptools")
+world <- wrld_simpl |> 
+  sf::st_as_sf() |> 
+  sf::st_transform(crs = "+proj=robin")
+
+chart <- df |>
+  dplyr::mutate(
+    country = dplyr::case_when(
+      country == "Bolivia (Plurinational State of)" ~ "Bolivia",
+      country == "Cabo Verde" ~ "Cape Verde",
+      country == "CÃƒÂ´te dÃ¢â‚¬â„¢Ivoire" ~ "Cote d'Ivoire",
+      country == "Czechia" ~ "Czech Republic",
+      country == "Eswatini" ~ "Swaziland",
+      country == "Libya" ~ "Libyan Arab Jamahiriya",
+      country == "Micronesia (Federated States of)" ~ "Micronesia, Federated States of",
+      country == "Myanmar" ~ "Burma",
+      country == "Democratic People's Republic of Korea" ~ "Korea, Democratic People's Republic of",
+      country == "North Macedonia" ~ NA_character_,
+      country == "Russian Federation" ~ "Russia",
+      country == "Republic of Korea" ~ "Korea, Republic of",
+      country == "South Sudan" ~ NA_character_,
+      country == "United Kingdom of Great Britain and Northern Ireland" ~ "United Kingdom",
+      country == "United States of America" ~ "United States",
+      country == "Venezuela (Bolivarian Republic of)" ~ "Venezuela",
+      TRUE ~ country
+    )
+  ) |>
+  dplyr::filter(!is.na(country)) |> 
+  dplyr::left_join(world, by = c("country" = "NAME"))
+
+```
+
+
+# Visualize
+
+We want to create a gif that holds the world chart for multiple years. This is normally done with gganimate but it made problems here so I took another approach by passing all charts to `animation::saveGIF()`.
+
+```{r Visualize, eval = FALSE}
+years <- unique(chart$year)
+animation::saveGIF(
+  {
+    purrr::walk(years, function(y, chart) {
+      cli::cli_process_start("Compute {.val {y}}")
+      p <- chart |>
+        dplyr::filter(year == y) |>
+        ggplot() +
+        geom_sf(aes(geometry = geometry, fill = status, group = year), size = 0.05, color = "grey70") +
+        hrbrthemes::theme_ft_rc(grid = FALSE, axis_text_size = 0) +
+        ggsci::scale_fill_jco(
+          alpha = 0.4,
+          labels = c("Free", "Not Free", "Partly Free"),
+          name = ""
+        ) +
+        labs(
+          title = glue::glue("{y} - Freedom in the World"),
+          subtitle = tools::toTitleCase("Freedom Status in the world depending on civil liberties and political rights"),
+          caption = "Data from Freedom House and the United Nations by way of Arthur Cheib | #TidyTuesday 2022/08\nViz: @mrcaseb"
+        ) +
+        theme(
+          legend.position = "bottom",
+          plot.title = element_text(hjust = 0.5)
+        ) +
+        NULL
+      plot(p)
+      cli::cli_process_done()
+    }, chart = chart)
+  },
+  movie.name = "freedom_in_the_world.gif",
+  interval = 0.5,
+  ani.width = 1985,
+  ani.height = 1500,
+  ani.res = 300
+)
+
+```
+
+![Alt Text](freedom_in_the_world.gif)
