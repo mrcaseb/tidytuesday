@@ -1,48 +1,46 @@
 Freedom in the World - TidyTuesday
 ================
 Sebastian Carl
-2022-02-23 11:22:53
+2022-02-23 14:20:47
 
 # TidyTuesday
 
-Join the R4DS Online Learning Community in the weekly \#TidyTuesday
+Join the R4DS Online Learning Community in the weekly #TidyTuesday
 event! Every week we post a raw dataset, a chart or article related to
 that dataset, and ask you to explore the data. While the dataset will be
 “tamed”, it will not always be tidy! As such you might need to apply
 various R for Data Science techniques to wrangle the data into a true
 tidy format. The goal of TidyTuesday is to apply your R skills, get
-feedback, explore other’s work, and connect with the greater \#RStats
+feedback, explore other’s work, and connect with the greater #RStats
 community! As such we encourage everyone of all skills to participate!
+
+``` r
+knitr::opts_chunk$set(
+    echo = TRUE,
+    dpi = 300,
+    tidy = "styler"
+)
+library(tidyverse)
+library(tidytuesdayR)
+library(sf)
+```
 
 # Load the weekly Data
 
-Dowload the weekly data and make available in the `tt` object.
+Download the weekly data and make available in the `tt` object.
 
 ``` r
 tt <- tt_load("2022-02-22")
 ```
 
-    ## Only 6 Github queries remaining until 2022-02-23 12:00:29 pm CET.
-    ## Only 6 Github queries remaining until 2022-02-23 12:00:29 pm CET.
-    ## Only 6 Github queries remaining until 2022-02-23 12:00:29 pm CET.
-    ## Only 6 Github queries remaining until 2022-02-23 12:00:29 pm CET.
-    ## Only 6 Github queries remaining until 2022-02-23 12:00:29 pm CET.
-
     ## --- Compiling #TidyTuesday Information for 2022-02-22 ----
-
-    ## Only 5 Github queries remaining until 2022-02-23 12:00:29 pm CET.
 
     ## --- There is 1 file available ---
 
-    ## Only 4 Github queries remaining until 2022-02-23 12:00:29 pm CET.
-
     ## --- Starting Download ---
 
-    ## Only 4 Github queries remaining until 2022-02-23 12:00:29 pm CET.
-
+    ## 
     ##  Downloading file 1 of 1: `freedom.csv`
-
-    ## Only 3 Github queries remaining until 2022-02-23 12:00:30 pm CET.
 
     ## --- Download complete ---
 
@@ -109,10 +107,14 @@ and the actual dataset.
 
 ``` r
 data("wrld_simpl", package = "maptools")
-world <- wrld_simpl |> 
-  sf::st_as_sf() |> 
+world <- wrld_simpl |>
+  sf::st_as_sf() |>
   sf::st_transform(crs = "+proj=robin")
+```
 
+    ## Lade nötiges Paket: sp
+
+``` r
 chart <- df |>
   dplyr::mutate(
     country = dplyr::case_when(
@@ -135,7 +137,7 @@ chart <- df |>
       TRUE ~ country
     )
   ) |>
-  dplyr::filter(!is.na(country)) |> 
+  dplyr::filter(!is.na(country)) |>
   dplyr::left_join(world, by = c("country" = "NAME"))
 ```
 

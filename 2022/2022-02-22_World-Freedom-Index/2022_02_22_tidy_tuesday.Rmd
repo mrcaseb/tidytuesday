@@ -20,19 +20,21 @@ While the dataset will be “tamed”, it will not always be tidy! As such you m
 The goal of TidyTuesday is to apply your R skills, get feedback, explore other’s work, and connect with the greater #RStats community!
 As such we encourage everyone of all skills to participate!
 
-```{r setup, include=FALSE}
+```{r setup, include=TRUE, message=FALSE}
 
-knitr::opts_chunk$set(echo = TRUE)
-
+knitr::opts_chunk$set(
+	echo = TRUE,
+	dpi = 300,
+	tidy = "styler"
+)
 library(tidyverse)
 library(tidytuesdayR)
 library(sf)
-library(maptools)
 ```
 
 # Load the weekly Data
 
-Dowload the weekly data and make available in the `tt` object.
+Download the weekly data and make available in the `tt` object.
 
 ```{r Load}
 
